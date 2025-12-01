@@ -1,0 +1,41 @@
+import pytest
+import time
+from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from pages.main_page import MainPage
+
+class TestMainPage:
+    def setup_method(self):
+        service = Service(ChromeDriverManager().install())
+        self.driver = webdriver.Chrome(service=service)
+        self.driver.implicitly_wait(10)
+        self.main_page = MainPage(self.driver)
+
+    def teardown_method(self):
+        self.driver.quit()
+
+    def test_main_page_loads(self):
+        """Тест: Главная страница загружается"""
+        self.main_page.open()
+        assert "ЭкскурсиУм" in self.driver.title
+        print("✅ Главная страница загружена")
+
+    def test_empty_search_redirects_to_excursions(self):
+        """Тест: Пустой поиск перенаправляет на страницу экскурсий"""
+        self.main_page.open()
+        self.main_page.search_excursions("")  # Пустой поиск
+        
+        time.sleep(3)
+        current_url = self.driver.current_url
+        assert "ekskursii" in current_url or "list" in current_url
+        print("✅ Пустой поиск перенаправляет на экскурсии")
+
+    def test_search_with_query(self):
+        """Тест: Поиск с запросом"""
+        self.main_page.open()
+        self.main_page.search_excursions("музей")
+        
+        time.sleep(3)
+        assert "музей" in self.driver.page_source.lower() or "search" in self.driver.current_url
+        print("✅ Поиск с запросом работает")
